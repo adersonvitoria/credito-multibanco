@@ -1,20 +1,14 @@
-// Plataforma de análise de crédito multibanco com IA — modelo de CASCATA.
+// Plataforma de análise de crédito multibanco com IA.
 //
-// Em vez de disparar consulta (hard pull) para todos os bancos ao mesmo tempo
-// (o que derruba o score do cliente e comoditiza os bancos), a plataforma:
-//   1) pré-qualifica por IA SEM consultar o birô (Fase 1),
-//   2) consulta em CASCATA, sequencialmente, só o topo da fila, parando ao
-//      conseguir uma boa aprovação (Fase 2) — preservando o score.
-//
-// Banco padrão: SQLite (zero configuração). Para produção, troque o provider
-// para "postgresql". SQLite não suporta enums no Prisma → status são String.
+// Banco: PostgreSQL (Neon na Vercel; funciona local com a mesma DATABASE_URL).
+// Status são String (mantém compatibilidade e simplicidade).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

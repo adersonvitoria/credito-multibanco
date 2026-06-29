@@ -137,6 +137,42 @@ prisma/
   seed.ts                       # loja demo + convênios
 ```
 
+## Deploy na Vercel
+
+O app é Next.js e roda na Vercel, com dois cuidados: **Postgres** (a Vercel não
+persiste SQLite) e **modo simulado** em produção (o Playwright/RPA não roda no
+serverless — veja abaixo).
+
+1. **Crie um Postgres no Neon** (https://neon.tech ou Marketplace da Vercel) e
+   copie a `DATABASE_URL`.
+2. **Aplique o schema + seed** uma vez (localmente, apontando para o Neon):
+   ```bash
+   # no .env, DATABASE_URL = sua string do Neon
+   npx prisma db push
+   npm run db:seed        # cria loja@demo.com / demo1234 + convênios
+   ```
+3. **Importe o repositório na Vercel**: vercel.com → *Add New → Project* →
+   importe `adersonvitoria/credito-multibanco` (framework Next.js é detectado).
+4. **Configure as variáveis de ambiente** no projeto da Vercel:
+
+   | Variável | Valor |
+   |---|---|
+   | `DATABASE_URL` | string do Neon |
+   | `JWT_SECRET` | string aleatória longa |
+   | `CREDENTIALS_KEY` | string aleatória longa |
+   | `MODO_CONSULTA` | `simulado` |
+   | `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` | `1` (evita baixar o Chromium no build) |
+   | `ANTHROPIC_API_KEY` | (opcional) ativa a análise por IA |
+   | `ANTHROPIC_MODEL` | (opcional) `claude-opus-4-8` |
+
+5. **Deploy**. Pronto — login com `loja@demo.com` / `demo1234`.
+
+> **RPA em produção:** o Playwright precisa de um navegador real e não roda nas
+> funções serverless da Vercel. Por isso a Vercel roda em `MODO_CONSULTA=simulado`.
+> Para consultar os portais de verdade, rode o RPA num **worker dedicado**
+> (Railway/Render/Fly/VM) que a Vercel aciona via fila/HTTP, com
+> `MODO_CONSULTA=rpa` e `RPA_PORTAL_MOCK=false`.
+
 ## Próximos passos
 
 - Conectores de bancos reais (uma receita por portal) + cofre de credenciais
