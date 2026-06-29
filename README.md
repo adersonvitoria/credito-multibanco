@@ -78,6 +78,43 @@ a **URL do portal** e o **usuário/senha** do convênio da loja.
 | Banco Pan | API | lojista.bancopan.com.br |
 | Omni Financeira | RPA | portal.omni.com.br |
 
+## Topologia em produção (no ar)
+
+| Componente | URL | Papel |
+|---|---|---|
+| **App (UI)** | https://credito-multibanco.vercel.app | Vercel — UI/API, cria a proposta e consulta o score (1x). Roda em `MODO_CONSULTA=simulado`; com `WORKER_URL` definido, **delega a consulta dos bancos ao worker**. |
+| **Worker RPA** | https://credito-multibanco-worker-production.up.railway.app | Railway (Docker + Chromium) — `MODO_CONSULTA=rpa`. Recebe `POST /api/worker/processar` (autenticado por `WORKER_SECRET`) e roda o Playwright nos portais. |
+| **Banco** | Prisma Postgres (Marketplace Vercel) | Compartilhado pelos dois. |
+
+```
+Vercel (UI) ── cria proposta + score ──▶ POST /api/worker/processar (x-worker-secret)
+                                                   │
+                                          Railway worker (Playwright/Chromium, MODO_CONSULTA=rpa)
+                                                   │ grava respostas + análise
+                                                   ▼
+                                          Prisma Postgres ◀── a tela lê o resultado
+```
+
+Se o worker estiver indisponível, a Vercel faz **fallback** para processamento inline
+(simulado), de modo que a proposta sempre conclui. Login demo: `loja@demo.com` / `demo1234`.
+
+> **Portais reais:** no worker (Railway), troque `RPA_PORTAL_MOCK=false` e preencha os
+> seletores de cada banco em `src/lib/connectors/portais.ts` + cadastre URL/usuário/senha
+> em **Bancos & credenciais**. (No demo, `RPA_PORTAL_MOCK=true` → consulta o portal mock.)
+
+### Deploy do worker (Railway)
+
+```bash
+railway init --name credito-multibanco-worker
+railway variables --set "DATABASE_URL=..." --set "CREDENTIALS_KEY=..." \
+  --set "JWT_SECRET=..." --set "MODO_CONSULTA=rpa" --set "RPA_PORTAL_MOCK=true" \
+  --set "WORKER_SECRET=..." --set "APP_BASE_URL=https://<seu-worker>.up.railway.app"
+railway up --service credito-multibanco-worker     # builda o Dockerfile (Node + Chromium)
+railway domain                                      # gera o domínio público
+```
+Depois, na Vercel: defina `WORKER_URL` (= domínio do worker) e `WORKER_SECRET` (o mesmo)
+e refaça o deploy. O `Dockerfile` já instala OpenSSL e o Chromium do Playwright.
+
 ## Stack
 
 Next.js 14 (App Router) + Prisma + SQLite + Tailwind + `@anthropic-ai/sdk` +
