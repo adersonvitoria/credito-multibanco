@@ -2,16 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { obterSessao } from "@/lib/auth";
 import { BANCOS } from "@/lib/bancos";
-import { consultarBancos } from "@/lib/dispatch";
 import { consultarScore } from "@/lib/bureau";
-import { analisarPropostas } from "@/lib/ai";
-import { descriptografar } from "@/lib/crypto";
-import { getPortal } from "@/lib/bancos/catalogo";
-import type { DadosConsulta, CredenciaisBanco } from "@/lib/connectors/types";
+import { processarProposta } from "@/lib/processarProposta";
 import type { DadosProposta } from "@/types";
 
-// Garante runtime Node (Playwright/RPA não roda no Edge).
+// Runtime Node. maxDuration alto porque, com worker, aguardamos a consulta RPA.
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 // GET /api/propostas — lista as propostas da loja autenticada.
 export async function GET() {
@@ -27,8 +24,9 @@ export async function GET() {
   return NextResponse.json({ propostas });
 }
 
-// POST /api/propostas — consulta o score (birô, uma vez), envia a TODOS os
-// bancos conveniados, persiste as respostas e gera a análise com IA.
+// POST /api/propostas — consulta o score (birô, 1x), cria a proposta e dispara o
+// processamento (consulta a todos os bancos): no worker dedicado se WORKER_URL
+// estiver configurado (RPA real), senão inline (modo do próprio ambiente).
 export async function POST(req: Request) {
   const sessao = await obterSessao();
   if (!sessao) return NextResponse.json({ erro: "Não autenticado." }, { status: 401 });
@@ -52,13 +50,13 @@ export async function POST(req: Request) {
 
   const nascimento = new Date(dados.clienteNascimento);
 
-  // Bancos conveniados e ativos para esta loja.
+  // Bancos conveniados (checagem antecipada para erro claro).
   const convenios = await prisma.convenio.findMany({
     where: { usuarioId: sessao.id, ativo: true },
   });
-  const nomesConveniados = new Set(convenios.map((c) => c.bancoNome));
-  const conveniados = BANCOS.filter((b) => nomesConveniados.has(b.nome));
-
+  const conveniados = BANCOS.filter((b) =>
+    new Set(convenios.map((c) => c.bancoNome)).has(b.nome)
+  );
   if (conveniados.length === 0) {
     return NextResponse.json(
       { erro: "A loja não possui convênio ativo com nenhum banco." },
@@ -66,24 +64,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Credenciais cadastradas dos portais (senha descriptografada em memória).
-  const credRows = await prisma.credencial.findMany({
-    where: { usuarioId: sessao.id, ativo: true },
-  });
-  const credenciais: Record<string, CredenciaisBanco> = {};
-  for (const c of credRows) {
-    try {
-      credenciais[c.bancoNome] = {
-        usuario: c.login,
-        senha: descriptografar(c.senhaCriptografada),
-        portalUrl: c.portalUrl || getPortal(c.bancoNome)?.portalUrl,
-      };
-    } catch {
-      // Credencial corrompida/chave trocada — ignora (banco cai p/ simulado/demo).
-    }
-  }
-
-  // Consulta o score no birô UMA vez (o lojista não informa o score).
+  // Score consultado no birô UMA vez (o lojista não informa).
   const consulta = consultarScore(dados.clienteCpf, nascimento);
 
   const proposta = await prisma.proposta.create({
@@ -94,7 +75,7 @@ export async function POST(req: Request) {
       clienteCpf: dados.clienteCpf.trim(),
       clienteNascimento: nascimento,
       clienteRenda: dados.clienteRenda,
-      clienteScore: consulta.score, // score consultado no birô
+      clienteScore: consulta.score,
       clienteProfissao: dados.clienteProfissao.trim(),
       clienteCidade: dados.clienteCidade.trim(),
       clienteUf: dados.clienteUf.trim().toUpperCase(),
@@ -103,106 +84,50 @@ export async function POST(req: Request) {
       veiculoValor: dados.veiculoValor,
       valorEntrada: dados.valorEntrada,
       prazoMeses: dados.prazoMeses,
-      maxBancosCascata: conveniados.length, // consulta todos
+      maxBancosCascata: conveniados.length,
       consentimentoLGPD: true,
       consentimentoEm: new Date(),
     },
   });
 
   try {
-    const dadosConsulta: DadosConsulta = {
-      clienteNome: proposta.clienteNome,
-      clienteCpf: proposta.clienteCpf,
-      clienteProfissao: proposta.clienteProfissao,
-      clienteCidade: proposta.clienteCidade,
-      clienteUf: proposta.clienteUf,
-      clienteNascimento: nascimento,
-      clienteRenda: proposta.clienteRenda,
-      clienteScore: proposta.clienteScore,
-      veiculoDescricao: proposta.veiculoDescricao,
-      veiculoAno: proposta.veiculoAno,
-      veiculoValor: proposta.veiculoValor,
-      valorEntrada: proposta.valorEntrada,
-      prazoMeses: proposta.prazoMeses,
-    };
-
-    // Consulta TODOS os bancos conveniados (usando as credenciais cadastradas).
-    const { resultados, consultasRealizadas } = await consultarBancos(
-      dadosConsulta,
-      conveniados,
-      credenciais
-    );
-
-    await prisma.respostaBanco.createMany({
-      data: resultados.map((r) => ({
-        propostaId: proposta.id,
-        bancoNome: r.bancoNome,
-        status: r.status,
-        probabilidadeAprovacao: r.probabilidadeAprovacao,
-        consultaHardRealizada: r.consultaHardRealizada,
-        ordemCascata: r.ordemCascata,
-        previsaoRespostaMin: r.previsaoRespostaMin,
-        modoIntegracao: r.modoIntegracao,
-        taxaJurosMes: r.taxaJurosMes,
-        valorFinanciado: r.valorFinanciado,
-        valorParcela: r.valorParcela,
-        prazoMeses: r.prazoMeses,
-        valorTotal: r.valorTotal,
-        cet: r.cet,
-        retornoLojista: r.retornoLojista,
-        observacao: r.observacao,
-        tempoRespostaMs: r.tempoRespostaMs,
-      })),
-    });
-
-    const analise = await analisarPropostas(
-      {
-        clienteNome: proposta.clienteNome,
-        clienteNascimento: nascimento,
-        clienteRenda: proposta.clienteRenda,
-        clienteScore: proposta.clienteScore,
-        clienteProfissao: proposta.clienteProfissao,
-        veiculoDescricao: proposta.veiculoDescricao,
-        veiculoAno: proposta.veiculoAno,
-        veiculoValor: proposta.veiculoValor,
-        valorEntrada: proposta.valorEntrada,
-        prazoMeses: proposta.prazoMeses,
-      },
-      resultados,
-      { totalConveniados: conveniados.length, consultasRealizadas }
-    );
-
-    await prisma.analiseIA.create({
-      data: {
-        propostaId: proposta.id,
-        resumoExecutivo: analise.resumoExecutivo,
-        estrategiaRecomendada: analise.estrategiaRecomendada,
-        melhorBanco: analise.melhorBanco,
-        chanceAprovacao: analise.chanceAprovacao,
-        analisePerfil: analise.analisePerfil,
-        rankingJson: JSON.stringify(analise.ranking),
-        ajustesJson: JSON.stringify(analise.ajustes),
-        geradoPorIA: analise.geradoPorIA,
-      },
-    });
-
-    await prisma.proposta.update({
-      where: { id: proposta.id },
-      data: { status: "CONCLUIDA" },
-    });
-
+    await delegarOuProcessar(proposta.id);
     return NextResponse.json({ id: proposta.id }, { status: 201 });
   } catch (erro) {
-    console.error("[propostas] falha no processamento:", erro);
-    await prisma.proposta.update({
-      where: { id: proposta.id },
-      data: { status: "ERRO" },
-    });
-    return NextResponse.json(
-      { erro: "Falha ao processar a proposta.", id: proposta.id },
-      { status: 500 }
-    );
+    console.error("[propostas] worker falhou, tentando inline:", erro);
+    // Fallback: processa inline (modo do próprio ambiente) para sempre concluir.
+    try {
+      await processarProposta(proposta.id);
+      return NextResponse.json({ id: proposta.id }, { status: 201 });
+    } catch (erro2) {
+      console.error("[propostas] falha no processamento inline:", erro2);
+      return NextResponse.json(
+        { erro: "Falha ao processar a proposta.", id: proposta.id },
+        { status: 500 }
+      );
+    }
   }
+}
+
+// Se WORKER_URL+WORKER_SECRET estão configurados, delega a consulta ao worker
+// dedicado (Railway, RPA real). Senão, processa no próprio ambiente.
+async function delegarOuProcessar(propostaId: string): Promise<void> {
+  const workerUrl = process.env.WORKER_URL;
+  const secret = process.env.WORKER_SECRET;
+
+  if (workerUrl && secret) {
+    const res = await fetch(`${workerUrl.replace(/\/$/, "")}/api/worker/processar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-worker-secret": secret },
+      body: JSON.stringify({ propostaId }),
+    });
+    if (!res.ok) {
+      throw new Error(`worker respondeu ${res.status}`);
+    }
+    return;
+  }
+
+  await processarProposta(propostaId);
 }
 
 function validar(d: DadosProposta): string | null {
