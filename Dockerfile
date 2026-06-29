@@ -12,14 +12,21 @@ ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
 ENV NODE_ENV=production
 ENV MODO_CONSULTA=rpa
 
+# OpenSSL + CA certs são exigidos pelo engine do Prisma em runtime.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copia package*.json E o schema do Prisma antes do `npm ci` — o postinstall do
+# projeto roda `prisma generate`, que precisa de prisma/schema.prisma presente.
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci
 
 COPY . .
 
-RUN npx prisma generate
-# Instala o Chromium + dependências de sistema necessárias para o Playwright.
+# Instala o Chromium + dependências de sistema para o Playwright.
 RUN npx playwright install --with-deps chromium
+# Build (o script já roda `prisma generate && next build`).
 RUN npm run build
 
 EXPOSE 3000
