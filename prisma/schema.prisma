@@ -1,0 +1,181 @@
+// Plataforma de análise de crédito multibanco com IA — modelo de CASCATA.
+//
+// Em vez de disparar consulta (hard pull) para todos os bancos ao mesmo tempo
+// (o que derruba o score do cliente e comoditiza os bancos), a plataforma:
+//   1) pré-qualifica por IA SEM consultar o birô (Fase 1),
+//   2) consulta em CASCATA, sequencialmente, só o topo da fila, parando ao
+//      conseguir uma boa aprovação (Fase 2) — preservando o score.
+//
+// Banco padrão: SQLite (zero configuração). Para produção, troque o provider
+// para "postgresql". SQLite não suporta enums no Prisma → status são String.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  lojaNome  String
+  createdAt DateTime @default(now())
+
+  propostas   Proposta[]
+  convenios   Convenio[]
+  simulacoes  Simulacao[]
+  credenciais Credencial[]
+}
+
+// Credenciais de acesso da loja ao portal de cada banco/financeira.
+// A senha é guardada CRIPTOGRAFADA (AES-256-GCM, ver src/lib/crypto.ts) e nunca
+// é retornada pela API.
+model Credencial {
+  id        String  @id @default(cuid())
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  bancoNome String
+
+  portalUrl          String? // sobrescreve a URL do catálogo, se necessário
+  login              String // usuário/login no portal do banco
+  senhaCriptografada String // senha cifrada (nunca em texto puro)
+  ativo              Boolean @default(true)
+
+  atualizadoEm DateTime @updatedAt
+  criadoEm     DateTime @default(now())
+
+  @@unique([usuarioId, bancoNome])
+  @@index([usuarioId])
+}
+
+// Convênio da loja com um banco/financeira. Um banco só recebe propostas de
+// lojas conveniadas (correspondente bancário). Bancos sem convênio ativo não
+// participam da cascata.
+model Convenio {
+  id        String  @id @default(cuid())
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  bancoNome String
+  ativo     Boolean @default(true)
+
+  @@unique([usuarioId, bancoNome])
+  @@index([usuarioId])
+}
+
+// Uma proposta de crédito enviada por uma loja de carros.
+model Proposta {
+  id        String  @id @default(cuid())
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+  status    String  @default("PROCESSANDO") // PROCESSANDO | CONCLUIDA | ERRO
+
+  // Dados do cliente (núcleo canônico enxuto)
+  clienteNome       String
+  clienteCpf        String
+  clienteNascimento DateTime
+  clienteRenda      Float
+  clienteScore      Int
+  clienteProfissao  String
+  clienteCidade     String
+  clienteUf         String
+
+  // Dados do veículo
+  veiculoDescricao String
+  veiculoAno       Int
+  veiculoValor     Float
+
+  // Condições desejadas
+  valorEntrada Float
+  prazoMeses   Int
+
+  // Estratégia / cascata
+  maxBancosCascata Int @default(3) // nº máximo de consultas (hard pulls)
+
+  // Consentimento LGPD (obrigatório para disparar)
+  consentimentoLGPD Boolean   @default(false)
+  consentimentoEm   DateTime?
+
+  createdAt DateTime @default(now())
+
+  respostas RespostaBanco[]
+  analise   AnaliseIA?
+
+  @@index([usuarioId])
+}
+
+// Resposta de um banco/financeira a uma proposta.
+model RespostaBanco {
+  id         String   @id @default(cuid())
+  proposta   Proposta @relation(fields: [propostaId], references: [id], onDelete: Cascade)
+  propostaId String
+
+  bancoNome String
+  // APROVADO | PRE_APROVADO | NEGADO | EM_ANALISE_MESA | NAO_CONSULTADO
+  status    String
+
+  probabilidadeAprovacao Float?  // 0–100, da pré-qualificação (Fase 1)
+  consultaHardRealizada  Boolean @default(false) // consumiu consulta ao birô?
+  ordemCascata           Int? // posição na fila da cascata (1 = primeiro)
+  previsaoRespostaMin    Int? // minutos estimados quando cai na mesa
+  modoIntegracao         String  @default("INSTANTANEO") // INSTANTANEO | MESA
+
+  taxaJurosMes    Float?
+  valorFinanciado Float?
+  valorParcela    Float?
+  prazoMeses      Int?
+  valorTotal      Float?
+  cet             Float?
+  retornoLojista  Float? // R$ de retorno/comissão ao lojista
+
+  observacao      String?
+  tempoRespostaMs Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([propostaId])
+}
+
+// Simulação rápida (estimativa) — formulário enxuto, sem consulta ao birô e
+// sem decisão de crédito. Só estima parcelas a partir do valor do veículo.
+model Simulacao {
+  id        String  @id @default(cuid())
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  clienteNome       String
+  clienteCpf        String
+  clienteNascimento DateTime
+
+  veiculoDescricao String
+  veiculoPlaca     String
+  veiculoAno       Int
+  veiculoValor     Float
+
+  resultadoJson String // JSON do ResultadoSimulacao
+  createdAt     DateTime @default(now())
+
+  @@index([usuarioId])
+}
+
+// Análise gerada pela IA sobre a estratégia e as respostas.
+model AnaliseIA {
+  id         String   @id @default(cuid())
+  proposta   Proposta @relation(fields: [propostaId], references: [id], onDelete: Cascade)
+  propostaId String   @unique
+
+  resumoExecutivo       String
+  estrategiaRecomendada String @default("")
+  melhorBanco           String?
+  chanceAprovacao       String // alta | media | baixa
+  analisePerfil         String
+  rankingJson           String // JSON: [{ banco, posicao, pros, contras }]
+  ajustesJson           String // JSON: [{ acao, impactoEsperado }]
+  geradoPorIA           Boolean @default(true)
+
+  createdAt DateTime @default(now())
+}
