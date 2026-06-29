@@ -90,8 +90,8 @@ export default function NovaPropostaPage() {
       <Link href="/dashboard" className="text-sm text-slate-500 hover:text-marca-dark">
         ← Voltar
       </Link>
-      <h1 className="mb-1 mt-2 text-2xl font-bold text-slate-900">Nova proposta</h1>
-      <p className="mb-6 text-sm text-slate-500">
+      <h1 className="mb-1 mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Nova proposta</h1>
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         O <strong>score é consultado automaticamente</strong> (você não precisa
         informar) e a proposta é enviada a <strong>todos os {BANCOS.length} bancos
         conveniados</strong>. A consulta ao birô é feita uma única vez e
@@ -181,7 +181,7 @@ export default function NovaPropostaPage() {
             <select
               value={form.prazoMeses}
               onChange={(e) => set("prazoMeses", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-marca focus:ring-2 focus:ring-marca/30"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-marca focus:ring-2 focus:ring-marca/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               {[12, 24, 36, 48, 60, 72].map((m) => (
                 <option key={m} value={m}>
@@ -192,9 +192,9 @@ export default function NovaPropostaPage() {
           </Campo>
         </Secao>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="mb-1 font-semibold text-slate-900">Consentimento</h2>
-          <p className="mb-4 text-xs text-slate-500">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-1 font-semibold text-slate-900 dark:text-slate-100">Consentimento</h2>
+          <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
             O score será consultado no birô e a proposta enviada a todos os
             bancos conveniados.
           </p>
@@ -234,8 +234,8 @@ export default function NovaPropostaPage() {
 
 function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5">
-      <h2 className="mb-4 font-semibold text-slate-900">{titulo}</h2>
+    <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <h2 className="mb-4 font-semibold text-slate-900 dark:text-slate-100">{titulo}</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
     </div>
   );
@@ -252,7 +252,7 @@ function Campo({
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
       {children}
     </label>
   );
@@ -264,6 +264,6 @@ function inp(value: string, onChange: (v: string) => void) {
     value,
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
     className:
-      "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-marca focus:ring-2 focus:ring-marca/30",
+      "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-marca focus:ring-2 focus:ring-marca/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100",
   };
 }

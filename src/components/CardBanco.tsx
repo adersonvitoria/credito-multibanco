@@ -40,18 +40,18 @@ export function CardBanco({
 
   return (
     <div
-      className={`rounded-xl border bg-white p-4 ${
-        destaque ? "border-marca ring-2 ring-marca/30" : "border-slate-200"
+      className={`rounded-xl border bg-white p-4 dark:bg-slate-900 ${
+        destaque ? "border-marca ring-2 ring-marca/30" : "border-slate-200 dark:border-slate-800"
       } ${naoConsultado || status === "NEGADO" ? "opacity-80" : ""}`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {resposta.ordemCascata != null && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-white">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-white dark:bg-slate-600">
               {resposta.ordemCascata}
             </span>
           )}
-          <h3 className="font-semibold text-slate-900">{resposta.bancoNome}</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">{resposta.bancoNome}</h3>
           {destaque && (
             <span className="rounded-full bg-marca px-2 py-0.5 text-[10px] font-bold uppercase text-white">
               Melhor opção
@@ -87,7 +87,7 @@ export function CardBanco({
         <>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Info label="Parcela">
-              <span className="text-base font-bold text-slate-900">
+              <span className="text-base font-bold text-slate-900 dark:text-slate-100">
                 {formatarMoeda(resposta.valorParcela)}
               </span>
               <span className="text-slate-400"> /{resposta.prazoMeses}x</span>
@@ -103,7 +103,7 @@ export function CardBanco({
                 <span>Comprometimento da renda</span>
                 <span>{comprometimento.toFixed(0)}%</span>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
                   className={`h-full rounded-full ${
                     comprometimento > 30 ? "bg-amber-500" : "bg-marca"
@@ -141,7 +141,7 @@ function Info({ label, children }: { label: string; children: React.ReactNode })
   return (
     <div>
       <p className="text-xs text-slate-400">{label}</p>
-      <p className="text-slate-700">{children}</p>
+      <p className="text-slate-700 dark:text-slate-200">{children}</p>
     </div>
   );
 }

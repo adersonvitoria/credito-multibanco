@@ -101,10 +101,10 @@ export default function CredenciaisPage() {
       <Link href="/dashboard" className="text-sm text-slate-500 hover:text-marca-dark">
         ← Voltar
       </Link>
-      <h1 className="mb-1 mt-2 text-2xl font-bold text-slate-900">
+      <h1 className="mb-1 mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
         Bancos &amp; credenciais
       </h1>
-      <p className="mb-6 text-sm text-slate-500">
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Mapeamento dos bancos/financeiras para onde a loja envia as propostas.
         Configure a URL do portal, o usuário e a senha de cada convênio. A senha é
         guardada <strong>criptografada</strong> e nunca é exibida.
@@ -120,10 +120,10 @@ export default function CredenciaisPage() {
             return (
               <div
                 key={b.bancoNome}
-                className="rounded-xl border border-slate-200 bg-white p-5"
+                className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <h2 className="font-semibold text-slate-900">{b.bancoNome}</h2>
+                  <h2 className="font-semibold text-slate-900 dark:text-slate-100">{b.bancoNome}</h2>
                   <Tag>{b.tipoIntegracao}</Tag>
                   <Tag>{b.modo === "MESA" ? "mesa" : "instantâneo"}</Tag>
                   {b.conveniado ? (
@@ -221,7 +221,7 @@ export default function CredenciaisPage() {
 }
 
 const inputCls =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-marca focus:ring-2 focus:ring-marca/30";
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-marca focus:ring-2 focus:ring-marca/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100";
 
 function Campo({
   label,
@@ -234,7 +234,7 @@ function Campo({
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-1 block text-xs font-medium text-slate-600">{label}</span>
+      <span className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{label}</span>
       {children}
     </label>
   );
@@ -248,10 +248,10 @@ function Tag({
   cor?: "slate" | "emerald" | "amber" | "teal";
 }) {
   const cores: Record<string, string> = {
-    slate: "bg-slate-100 text-slate-500",
-    emerald: "bg-emerald-50 text-emerald-700",
-    amber: "bg-amber-50 text-amber-700",
-    teal: "bg-teal-50 text-marca-dark",
+    slate: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+    emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400",
+    amber: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400",
+    teal: "bg-teal-50 text-marca-dark dark:bg-teal-950/50 dark:text-marca-light",
   };
   return (
     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${cores[cor]}`}>

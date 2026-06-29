@@ -26,15 +26,15 @@ export default async function DashboardPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Propostas</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Propostas</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Dispare uma análise para todos os bancos e veja as melhores opções.
           </p>
         </div>
         <div className="flex gap-3">
           <Link
             href="/simulacoes/nova"
-            className="rounded-lg border border-marca/40 px-4 py-2.5 font-semibold text-marca-dark transition hover:bg-teal-50"
+            className="rounded-lg border border-marca/40 px-4 py-2.5 font-semibold text-marca-dark transition hover:bg-teal-50 dark:text-marca-light dark:hover:bg-slate-800"
           >
             Simulação rápida
           </Link>
@@ -48,8 +48,8 @@ export default async function DashboardPage() {
       </div>
 
       {propostas.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
-          <p className="text-slate-500">
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
+          <p className="text-slate-500 dark:text-slate-400">
             Nenhuma proposta ainda. Crie a primeira para disparar a análise
             multibanco.
           </p>
@@ -74,17 +74,17 @@ export default async function DashboardPage() {
               <Link
                 key={p.id}
                 href={`/propostas/${p.id}`}
-                className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-marca hover:shadow-md"
+                className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-marca hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="mb-2 flex items-start justify-between gap-2">
-                  <h2 className="font-semibold text-slate-900 group-hover:text-marca-dark">
+                  <h2 className="font-semibold text-slate-900 group-hover:text-marca-dark dark:text-slate-100">
                     {p.clienteNome}
                   </h2>
                   <span className="shrink-0 text-xs text-slate-400">
                     {new Date(p.createdAt).toLocaleDateString("pt-BR")}
                   </span>
                 </div>
-                <p className="mb-3 text-sm text-slate-500">
+                <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
                   {p.veiculoDescricao} • {formatarMoeda(p.veiculoValor)}
                 </p>
 
@@ -101,9 +101,9 @@ export default async function DashboardPage() {
                 </div>
 
                 {p.analise?.melhorBanco && (
-                  <p className="mt-3 border-t border-slate-100 pt-3 text-sm">
+                  <p className="mt-3 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
                     <span className="text-slate-400">Recomendado: </span>
-                    <span className="font-medium text-marca-dark">
+                    <span className="font-medium text-marca-dark dark:text-marca-light">
                       {p.analise.melhorBanco}
                     </span>
                   </p>
@@ -117,7 +117,7 @@ export default async function DashboardPage() {
       {simulacoes.length > 0 && (
         <section className="mt-10">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               Simulações recentes
             </h2>
             <Link
@@ -132,10 +132,10 @@ export default async function DashboardPage() {
               <Link
                 key={s.id}
                 href={`/simulacoes/${s.id}`}
-                className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-marca"
+                className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-marca dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium text-slate-800">{s.clienteNome}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{s.clienteNome}</span>
                   <span className="text-xs text-slate-400">
                     {new Date(s.createdAt).toLocaleDateString("pt-BR")}
                   </span>

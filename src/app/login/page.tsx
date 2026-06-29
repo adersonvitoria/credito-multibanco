@@ -34,29 +34,29 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 to-teal-50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl ring-1 ring-slate-200">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 to-teal-50 p-4 dark:from-slate-950 dark:to-slate-900">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-marca text-xl font-bold text-white">
             ₵
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Crédito Multibanco</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Crédito Multibanco</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Análise de crédito em todos os bancos, com IA.
           </p>
         </div>
 
-        <div className="mb-5 rounded-lg border border-marca/30 bg-teal-50/60 p-3">
+        <div className="mb-5 rounded-lg border border-marca/30 bg-teal-50/60 p-3 dark:bg-teal-950/30">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-marca-dark">
             Acesso de demonstração
           </p>
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-500">E-mail</span>
-            <code className="font-mono text-slate-800">loja@demo.com</code>
+            <code className="font-mono text-slate-800 dark:text-slate-200">loja@demo.com</code>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-500">Senha</span>
-            <code className="font-mono text-slate-800">demo1234</code>
+            <code className="font-mono text-slate-800 dark:text-slate-200">demo1234</code>
           </div>
           <p className="mt-2 text-[11px] text-slate-400">
             Os campos abaixo já vêm preenchidos — é só clicar em Entrar.
@@ -65,7 +65,7 @@ export default function LoginPage() {
 
         <form onSubmit={entrar} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
               E-mail
             </label>
             <input
@@ -73,11 +73,11 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-marca focus:ring-2 focus:ring-marca/30"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-marca focus:ring-2 focus:ring-marca/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
               Senha
             </label>
             <input
@@ -85,7 +85,7 @@ export default function LoginPage() {
               required
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-marca focus:ring-2 focus:ring-marca/30"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-marca focus:ring-2 focus:ring-marca/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
 

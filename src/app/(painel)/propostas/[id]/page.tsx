@@ -45,17 +45,17 @@ export default async function DetalheProposta({
 
       <div className="mb-6 mt-2 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             {proposta.clienteNome}
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {proposta.veiculoDescricao} ({proposta.veiculoAno})
           </p>
         </div>
       </div>
 
       {/* Resumo da operação */}
-      <div className="mb-6 grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-4 dark:border-slate-800 dark:bg-slate-900">
         <Resumo label="Valor do veículo" valor={formatarMoeda(proposta.veiculoValor)} />
         <Resumo
           label="Entrada"
@@ -75,7 +75,7 @@ export default async function DetalheProposta({
       <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
         {/* Respostas dos bancos */}
         <section>
-          <h2 className="mb-3 font-semibold text-slate-900">
+          <h2 className="mb-3 font-semibold text-slate-900 dark:text-slate-100">
             Respostas dos bancos ({proposta.respostas.length})
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -129,7 +129,7 @@ function Resumo({ label, valor }: { label: string; valor: string }) {
   return (
     <div>
       <p className="text-xs text-slate-400">{label}</p>
-      <p className="font-semibold text-slate-800">{valor}</p>
+      <p className="font-semibold text-slate-800 dark:text-slate-200">{valor}</p>
     </div>
   );
 }

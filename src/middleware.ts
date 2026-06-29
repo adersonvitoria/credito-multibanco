@@ -34,5 +34,7 @@ export const config = {
     "/propostas/:path*",
     "/simulacoes/:path*",
     "/credenciais/:path*",
+    "/usuarios/:path*",
+    "/configuracoes/:path*",
   ],
 };

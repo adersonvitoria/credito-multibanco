@@ -39,17 +39,17 @@ export default async function DetalheSimulacao({
       </Link>
 
       <div className="mb-1 mt-2 flex items-center gap-2">
-        <h1 className="text-2xl font-bold text-slate-900">{sim.clienteNome}</h1>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{sim.clienteNome}</h1>
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
           simulação
         </span>
       </div>
-      <p className="mb-6 text-sm text-slate-500">
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         {sim.veiculoDescricao} ({sim.veiculoAno}) • Placa {sim.veiculoPlaca}
       </p>
 
       {/* Parâmetros da estimativa */}
-      <div className="mb-6 grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-4 dark:border-slate-800 dark:bg-slate-900">
         <Resumo label="Valor do carro" valor={formatarMoeda(sim.veiculoValor)} />
         <Resumo label="Score (consultado)" valor={String(r.score)} />
         <Resumo
@@ -60,12 +60,12 @@ export default async function DetalheSimulacao({
       </div>
 
       {/* Estimativa por banco (todos os conveniados) */}
-      <h2 className="mb-2 font-semibold text-slate-900">
+      <h2 className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
         Estimativa por banco — referência {r.prazoRef}x
       </h2>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
+          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400 dark:bg-slate-800/50">
             <tr>
               <th className="px-4 py-3">Banco</th>
               <th className="px-4 py-3">Taxa a.m.</th>
@@ -74,10 +74,10 @@ export default async function DetalheSimulacao({
               <th className="px-4 py-3">Retorno loja</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {r.bancos.map((b) => (
               <tr key={b.banco} className={b.atendeScore ? "" : "opacity-60"}>
-                <td className="px-4 py-3 font-medium text-slate-700">
+                <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">
                   {b.banco}
                   {!b.atendeScore && (
                     <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
@@ -86,7 +86,7 @@ export default async function DetalheSimulacao({
                   )}
                 </td>
                 <td className="px-4 py-3 text-slate-600">{formatarPercent(b.taxaMes)}</td>
-                <td className="px-4 py-3 text-base font-bold text-slate-900">
+                <td className="px-4 py-3 text-base font-bold text-slate-900 dark:text-slate-100">
                   {formatarMoeda(b.parcela)}
                 </td>
                 <td className="px-4 py-3 text-slate-600">{formatarMoeda(b.total)}</td>
@@ -128,7 +128,7 @@ function Resumo({ label, valor }: { label: string; valor: string }) {
   return (
     <div>
       <p className="text-xs text-slate-400">{label}</p>
-      <p className="font-semibold text-slate-800">{valor}</p>
+      <p className="font-semibold text-slate-800 dark:text-slate-200">{valor}</p>
     </div>
   );
 }

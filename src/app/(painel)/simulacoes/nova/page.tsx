@@ -56,16 +56,16 @@ export default function NovaSimulacaoPage() {
       <Link href="/dashboard" className="text-sm text-slate-500 hover:text-marca-dark">
         ← Voltar
       </Link>
-      <h1 className="mb-1 mt-2 text-2xl font-bold text-slate-900">Simulação rápida</h1>
-      <p className="mb-6 text-sm text-slate-500">
+      <h1 className="mb-1 mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Simulação rápida</h1>
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         O score é consultado automaticamente e a estimativa de parcela é
         calculada para <strong>todos os bancos conveniados</strong>. Sem decisão
         de crédito — ideal para dar um número ao cliente na hora.
       </p>
 
       <form onSubmit={enviar} className="space-y-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="mb-4 font-semibold text-slate-900">Cliente</h2>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-4 font-semibold text-slate-900 dark:text-slate-100">Cliente</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Campo label="Nome" className="sm:col-span-2">
               <input {...inp(form.clienteNome, (v) => set("clienteNome", v))} required />
@@ -87,8 +87,8 @@ export default function NovaSimulacaoPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="mb-4 font-semibold text-slate-900">Veículo</h2>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-4 font-semibold text-slate-900 dark:text-slate-100">Veículo</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Campo label="Descrição do carro" className="sm:col-span-2">
               <input
@@ -152,7 +152,7 @@ function Campo({
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
       {children}
     </label>
   );
@@ -163,6 +163,6 @@ function inp(value: string, onChange: (v: string) => void) {
     value,
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
     className:
-      "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-marca focus:ring-2 focus:ring-marca/30",
+      "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-marca focus:ring-2 focus:ring-marca/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100",
   };
 }
