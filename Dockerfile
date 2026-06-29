@@ -9,8 +9,9 @@ WORKDIR /app
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 # DATABASE_URL placeholder só para `prisma generate` no build (o Railway injeta a real em runtime).
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-ENV NODE_ENV=production
 ENV MODO_CONSULTA=rpa
+# NODE_ENV fica para o runtime (no fim) — durante o build precisamos das
+# devDependencies (tailwindcss, postcss, typescript, prisma) para o next build.
 
 # OpenSSL + CA certs são exigidos pelo engine do Prisma em runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
@@ -29,5 +30,6 @@ RUN npx playwright install --with-deps chromium
 # Build (o script já roda `prisma generate && next build`).
 RUN npm run build
 
+ENV NODE_ENV=production
 EXPOSE 3000
 CMD ["npm", "run", "start"]
