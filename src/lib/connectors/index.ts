@@ -1,34 +1,30 @@
 // Resolve qual conector usar para cada banco.
 //
-// Demo: por padrão, todos os bancos usam o conector "simulado". Para acionar o
-// robô (Playwright) em um banco, liste o nome dele em RPA_BANCOS (.env) —
-// nesse caso a consulta vai pelo portal-banco MOCK (/mock-banco), provando o
-// fluxo de RPA. Em produção, cada banco RPA teria sua própria receita.
+// Padrão: TODOS os bancos são consultados via RPA (Playwright no portal web).
+// Cada banco tem sua config de portal (src/lib/connectors/portais.ts) executada
+// pelo motor genérico. Em modo demo (RPA_PORTAL_MOCK != "false") o alvo é o
+// portal mock local; com RPA_PORTAL_MOCK=false, usa a URL real do cadastro.
+//
+// Para desligar o RPA (dev/testes) e usar o motor de regras local, defina
+// MODO_CONSULTA=simulado.
 
 import { conectorSimulado } from "@/lib/connectors/simulado";
 import { conectorRPA } from "@/lib/connectors/rpa";
-import { receitaMockBanco } from "@/lib/connectors/recipes/mockBanco";
+import { criarReceita } from "@/lib/connectors/recipeEngine";
+import { getPortalConfig } from "@/lib/connectors/portais";
 import type { PerfilBanco } from "@/lib/bancos";
 import type { Conector, CredenciaisBanco } from "@/lib/connectors/types";
 
-function bancosRPA(): Set<string> {
-  return new Set(
-    (process.env.RPA_BANCOS ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-  );
+function modo(): "rpa" | "simulado" {
+  return process.env.MODO_CONSULTA === "simulado" ? "simulado" : "rpa";
 }
 
 export function getConector(
   banco: PerfilBanco,
-  credenciais?: CredenciaisBanco
+  _credenciais?: CredenciaisBanco
 ): Conector {
-  if (bancosRPA().has(banco.nome)) {
-    // No demo, a receita RPA é o portal mock; troque por receitaBancoX(banco) real.
-    return conectorRPA(banco, receitaMockBanco(banco));
-  }
-  return conectorSimulado(banco);
+  if (modo() === "simulado") return conectorSimulado(banco);
+  return conectorRPA(banco, criarReceita(getPortalConfig(banco.nome)));
 }
 
 export type { Conector, CredenciaisBanco, DadosConsulta } from "@/lib/connectors/types";

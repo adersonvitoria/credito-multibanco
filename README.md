@@ -14,19 +14,24 @@ queimar a proposta:
 
 ## Como a consulta é feita (conectores)
 
-Cada banco é consultado por um **conector** — a cascata não sabe qual:
+**Por padrão (`MODO_CONSULTA=rpa`), TODOS os bancos são consultados via robô
+Playwright** no portal web: login, preenche o formulário, submete e **raspa a
+resposta da tela**. O lojista cadastra os dados uma vez; o robô faz a consulta em
+cada portal.
 
-- **`simulado`** — motor de regras local (default / demo / sem credenciais).
-- **`rpa`** — robô **Playwright** que acessa o **portal do banco** como o lojista
-  faz hoje: login, preenche o formulário, submete e **raspa a resposta da tela**.
+- Cada banco tem uma **config de portal declarativa** em
+  [`portais.ts`](src/lib/connectors/portais.ts) (URL + seletores de login,
+  campos e resultado). O motor genérico
+  [`recipeEngine.ts`](src/lib/connectors/recipeEngine.ts) executa qualquer config.
+- Um **único navegador é reutilizado** por requisição (contexto isolado por banco).
+- Em modo demo (`RPA_PORTAL_MOCK=true`), todos consultam o **portal-banco mock**
+  [`/mock-banco`](src/app/mock-banco/page.tsx) (que varia a condição por banco),
+  provando a esteira ponta a ponta. Com `RPA_PORTAL_MOCK=false`, usa a **URL real**
+  de cada credencial.
+- `MODO_CONSULTA=simulado` desliga o RPA e usa o motor de regras local (dev/testes).
 
-O lojista cadastra os dados uma vez; por baixo dos panos o robô faz a consulta.
-Para **demonstrar o RPA ponta a ponta sem depender de portais reais**, o app
-serve um **portal-banco mock** em [`/mock-banco`](src/app/mock-banco/page.tsx), e
-a receita [`mockBanco.ts`](src/lib/connectors/recipes/mockBanco.ts) automatiza-o.
-
-> Plugar um banco real = escrever uma receita análoga (URL + seletores + login/
-> 2FA/captcha do portal) e fornecer as credenciais de convênio da loja.
+> Plugar um banco real = preencher a config dele em `portais.ts` com os seletores
+> do portal (e tratar login/2FA/captcha) + cadastrar URL e credenciais da loja.
 
 ### Limitações reais do RPA (e como são tratadas)
 
@@ -122,7 +127,9 @@ src/
     simulacao.ts                # estimativa por banco (simulação rápida)
     crypto.ts                   # criptografia das senhas (AES-256-GCM)
     connectors/                 # camada de conectores
-      simulado.ts | rpa.ts | recipes/mockBanco.ts | index.ts
+      index.ts | simulado.ts | rpa.ts (Playwright)
+      portais.ts                # config de portal por banco (URL + seletores)
+      recipeEngine.ts           # executa qualquer config via Playwright
     ai.ts                       # predição/roteamento com Claude + fallback
     finance.ts | auth.ts | prisma.ts
 prisma/

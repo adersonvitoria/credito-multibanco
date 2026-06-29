@@ -34,19 +34,29 @@ export interface ReceitaRPA {
   automacao: (ctx: ContextoRPA) => Promise<RespostaPortal>;
 }
 
+// Navegador reutilizado entre consultas (1 Chromium por processo; contexto
+// isolado por consulta). Importa o Playwright de forma dinâmica (lazy).
+let browserSingleton: any = null;
+async function getBrowser(): Promise<any> {
+  if (browserSingleton) return browserSingleton;
+  const pw: any = await import("playwright");
+  browserSingleton = await pw.chromium.launch({
+    headless: process.env.RPA_HEADLESS !== "false",
+  });
+  return browserSingleton;
+}
+
 export function conectorRPA(banco: PerfilBanco, receita: ReceitaRPA): Conector {
   return {
     banco,
     modo: "rpa",
     async consultar(dados, credenciais) {
       const inicio = Date.now();
-      let browser: any;
+      let context: any;
       try {
-        const pw: any = await import("playwright"); // lazy
-        browser = await pw.chromium.launch({
-          headless: process.env.RPA_HEADLESS !== "false",
-        });
-        const page = await browser.newPage();
+        const browser = await getBrowser();
+        context = await browser.newContext();
+        const page = await context.newPage();
         const baseUrl = process.env.APP_BASE_URL || "http://localhost:3000";
 
         const portal = await receita.automacao({ page, dados, credenciais, baseUrl });
@@ -74,7 +84,7 @@ export function conectorRPA(banco: PerfilBanco, receita: ReceitaRPA): Conector {
           tempoRespostaMs: Date.now() - inicio,
         };
       } finally {
-        if (browser) await browser.close().catch(() => {});
+        if (context) await context.close().catch(() => {});
       }
     },
   };

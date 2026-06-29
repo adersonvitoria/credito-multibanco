@@ -8,7 +8,7 @@
 // anexar os onChange. Os #ids e data-attributes são estáveis para a raspagem
 // em src/lib/connectors/recipes/mockBanco.ts.
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { calcularParcela } from "@/lib/finance";
 
 type Etapa = "login" | "proposta" | "resultado";
@@ -24,6 +24,12 @@ interface Resultado {
 export default function MockBancoPage() {
   const [etapa, setEtapa] = useState<Etapa>("login");
   const [resultado, setResultado] = useState<Resultado | null>(null);
+  const [banco, setBanco] = useState("Banco Demo");
+
+  useEffect(() => {
+    const b = new URLSearchParams(window.location.search).get("banco");
+    if (b) setBanco(b);
+  }, []);
 
   function entrar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,13 +41,16 @@ export default function MockBancoPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     setResultado(
-      decidir({
-        renda: Number(fd.get("renda")) || 0,
-        score: Number(fd.get("score")) || 0,
-        valor: Number(fd.get("valorVeiculo")) || 0,
-        entrada: Number(fd.get("entrada")) || 0,
-        prazo: Number(fd.get("prazo")) || 0,
-      })
+      decidir(
+        {
+          renda: Number(fd.get("renda")) || 0,
+          score: Number(fd.get("score")) || 0,
+          valor: Number(fd.get("valorVeiculo")) || 0,
+          entrada: Number(fd.get("entrada")) || 0,
+          prazo: Number(fd.get("prazo")) || 0,
+        },
+        deltaPorBanco(banco)
+      )
     );
     setEtapa("resultado");
   }
@@ -54,7 +63,7 @@ export default function MockBancoPage() {
             B
           </span>
           <div>
-            <p className="font-bold">Banco Demo — Portal do Parceiro</p>
+            <p className="font-bold">{banco} — Portal do Parceiro</p>
             <p className="text-xs text-slate-400">Esteira de crédito (ambiente mock)</p>
           </div>
         </div>
@@ -123,13 +132,16 @@ export default function MockBancoPage() {
 
 // "Política de crédito" própria deste portal (independente do motor da
 // plataforma — representa a lógica do banco, que não conhecemos por dentro).
-function decidir(c: {
-  renda: number;
-  score: number;
-  valor: number;
-  entrada: number;
-  prazo: number;
-}): Resultado {
+function decidir(
+  c: {
+    renda: number;
+    score: number;
+    valor: number;
+    entrada: number;
+    prazo: number;
+  },
+  delta = 0
+): Resultado {
   const financiado = Math.max(0, c.valor - c.entrada);
 
   if (c.score < 500)
@@ -137,7 +149,7 @@ function decidir(c: {
   if (c.prazo <= 0 || financiado <= 0)
     return { status: "NEGADO", taxa: null, parcela: null, total: null, obs: "Dados insuficientes." };
 
-  let taxa = 0.0185;
+  let taxa = 0.0185 + delta; // delta varia por banco
   if (c.score >= 700) taxa -= 0.002;
   if (c.valor > 0 && c.entrada / c.valor >= 0.3) taxa -= 0.001;
   taxa = Math.max(0.012, taxa);
@@ -170,4 +182,11 @@ function decidir(c: {
 function round(v: number, casas: number): number {
   const f = Math.pow(10, casas);
   return Math.round(v * f) / f;
+}
+
+// Varia a taxa-base do portal por banco (determinístico pelo nome): -0,2 a +0,5 p.p.
+function deltaPorBanco(banco: string): number {
+  let h = 0;
+  for (let i = 0; i < banco.length; i++) h = (h * 31 + banco.charCodeAt(i)) % 100000;
+  return (h % 70) / 10000 - 0.002; // -0.002 .. +0.005
 }
